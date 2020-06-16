@@ -1,4 +1,6 @@
-`Tags` cho phép chỉ chạy hoặc không chạy `role` hoặc `task` cụ thể.
+# TAGS
+
+`tags` cho phép chỉ chạy hoặc không chạy `role` hoặc `task` cụ thể.
 
 Có thể `tag` `roles`, `files`, `task`, hoặc `plays`. 
 ```sh
