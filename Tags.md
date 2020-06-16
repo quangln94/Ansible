@@ -6,23 +6,21 @@ Có thể `tag` `roles`, `files`, `task`, hoặc `plays`.
 ```sh
 vim tags.yml
 ---
-# You can apply tags to an entire play.
 - hosts: webservers
   tags: deploy
 
- roles:
-   # Tags applied to a role will be applied to the tasks in the role.
+  roles:
   - { role: tomcat, tags: ['tomcat', 'app'] }
 
- tasks:
+  tasks:
    - name: Notify on completion.
      local_action:
        module: osx_say
        msg: "{{inventory_hostname}} is finished!"
-     voice: Zarvox
-   tags:
-     - notifications
-     - say
+       voice: Zarvox
+     tags:
+       - notifications
+       - say
 
    - include: foo.yml
      tags: foo
