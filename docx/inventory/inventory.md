@@ -1,48 +1,83 @@
-# TAGS
+# Inventory
 
-`tags` cho phép chỉ chạy hoặc không chạy `role` hoặc `task` cụ thể.
+Định nghĩa các host sẽ được thực thi bới ansible
 
-Có thể `tag` `roles`, `files`, `task`, hoặc `plays`. 
+
+- Định nghĩa theo group
 ```sh
-vim tags.yml
----
-- hosts: webservers
-  tags: deploy
-
-  roles:
-  - { role: tomcat, tags: ['tomcat', 'app'] }
-
-  tasks:
-   - name: Notify on completion.
-     local_action:
-       module: osx_say
-       msg: "{{inventory_hostname}} is finished!"
-       voice: Zarvox
-     tags:
-       - notifications
-       - say
-
-   - include: foo.yml
-     tags: foo
+[webserver]
+web01
+web01
+web01
 ```
-- Chạy playbook với `role`:`tomcat` và `task`:`say`
+Để chạy playbook cho tất cả các host trên thì khai báo như sau:
 ```sh
-$ ansible-playbook tags.yml --tags "tomcat,say"
+- hosts: webserver
 ```
-- Chạy playbook bỏ qua `tag`:`notifications`
+Sử dụng command check RAM trên tất cả cá host
 ```sh
-$ ansible-playbook tags.yml --skip-tags "notifications"
+ansible webserver -a "free -m"
 ```
-Muốn thêm nhiều `tags` sử dụng cấu trúc file `.yaml`
+- Chỉ định biến cho `group`
 ```sh
-tags: ['one', 'two', 'three']
+[servercheck-web]
+www1.servercheck.in
+www2.servercheck.in
+
+# Chỉ định biến được áp dụng cho group [servercheck-web]
+[servercheck-web:vars]
+ansible_ssh_user=servercheck_svc
+
+[servercheck-db]
+db1.servercheck.in
+
+[servercheck-log]
+log.servercheck.in
+
+[servercheck-backup]
+backup.servercheck.in
+
+[servercheck-nodejs]
+atl1.servercheck.in
+atl2.servercheck.in
+nyc1.servercheck.in
+nyc2.servercheck.in
+nyc3.servercheck.in
+ned1.servercheck.in
+ned2.servercheck.in
+
+# Chỉ định biến được áp dụng cho group [servercheck-nodejs]
+[servercheck-nodejs:vars]
+ansible_ssh_user=servercheck_svc
+foo=bar
 ```
-hoặc
+- Khai báo các server cùng loại, vd như `centos` hoặc `ubuntu`
 ```sh
-tags:
-- one
-- two
-- three
+[centos:children]
+servercheck-web
+servercheck-db
+servercheck-nodejs
+servercheck-backup
+
+[ubuntu:children]
+servercheck-log
+```
+Thực thi lệnh trên tất cả các host
+```sh
+ansible centos -m yum -a "name=bash state=latest"
 ```
 
+## Inventory variables
+```sh
+[www]
+www1.example.com ansible_ssh_user=johndoe
+www2.example.com
 
+[db]
+db1.example.com
+db2.example.com
+
+[db:vars]
+ansible_ssh_port=5222
+database_performance_mode=true
+```
