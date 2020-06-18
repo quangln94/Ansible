@@ -1,0 +1,33 @@
+cat << EOF >> /etc/ansible/hosts
+[mons]
+mon01 192.168.20.141
+mon02 192.168.20.142
+mon03 192.168.20.143
+[mgrs]
+mon01 192.168.20.141
+mon02 192.168.20.142
+mon03 192.168.20.143
+[osds]
+osd01 192.168.20.141
+osd02 192.168.20.142
+osd03 192.168.20.143
+
+
+cat << EOF >> /etc/ansible/group_vars/all.yml.sample
+ceph_origin: repository
+ceph_repository: community
+ceph_repository_type: cdn
+ceph_stable_release: nautilus
+monitor_interface: eth0
+public_network: 172.16.0.0/16
+cluster_network: 10.10.10.0/8
+
+cat << EOF >> etc/ansible/group_vars/osd nodes
+osd_scenario: non-collocated
+osd_objectstore: bluestore
+devices:
+  - /dev/sda
+  - /dev/sdb
+dedicated_devices:
+  - /dev/sdc
+  - /dev/sdc

@@ -1,0 +1,33 @@
+# add to the end
+# specify Ceph admin user for SSH and Sudo
+[all:vars]
+ansible_ssh_user=cent
+ansible_become=true
+ansible_become_method=sudo
+ansible_become_user=root
+
+# set Monitor Daemon Node
+[mons]
+controller01
+controller02
+controller03
+
+# set Manager Daemon Node
+[mgrs]
+controller01
+controller02
+controller03
+
+# set OSD (Object Storage Daemon) Node
+[osds]
+controller01
+controller02
+controller03
+ceph01
+ceph02
+ceph03
+
+# add to the end
+[rgws]
+controller01
+controller02

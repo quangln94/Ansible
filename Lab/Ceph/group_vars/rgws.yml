@@ -1,0 +1,3 @@
+# create new
+# specify network interface for Object Gateway service
+radosgw_interface: eth0

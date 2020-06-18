@@ -1,0 +1,16 @@
+# create new
+ceph_origin: repository
+ceph_repository: community
+ceph_repository_type: cdn
+ceph_stable_release: nautilus
+
+fetch_directory: ~/ceph-ansible-keys
+
+# set network interface for monitoring
+monitor_interface: eth0
+# specify your public network
+public_network: 10.0.0.0/24
+# specify cluster network
+# if it's the same with public network, set like follows
+# if not the same, specify your cluster network
+cluster_network: "{{ public_network }}"

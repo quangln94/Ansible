@@ -1,0 +1,5 @@
+# create new
+# specify devices for saving data on Storage Node
+devices:
+  - /dev/sdb
+  - /dev/sdc
