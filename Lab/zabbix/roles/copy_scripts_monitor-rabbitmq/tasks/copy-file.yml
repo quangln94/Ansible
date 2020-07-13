@@ -1,0 +1,65 @@
+---
+- name: Copy file config monitor_rabbitmq.conf
+  copy:
+    src: monitor_rabbitmq.conf
+    dest: /etc/zabbix/zabbix_agentd.d/monitor_rabbitmq.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy file scripts api.py
+  copy:
+    src: api.py
+    dest: /etc/zabbix/scripts/monitor-rabbitmq/api.py
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy file scripts list_rabbit_nodes.sh
+  copy:
+    src: list_rabbit_nodes.sh
+    dest: /etc/zabbix/scripts/monitor-rabbitmq/list_rabbit_nodes.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy file scripts list_rabbit_queues.sh
+  copy:
+    src: list_rabbit_queues.sh
+    dest: /etc/zabbix/scripts/monitor-rabbitmq/list_rabbit_queues.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy file scripts list_rabbit_shovels.sh
+  copy:
+    src: list_rabbit_shovels.sh
+    dest: /etc/zabbix/scripts/monitor-rabbitmq/list_rabbit_shovels.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy file scripts .rab.auth
+  template:
+    src: .rab.auth
+    dest: /etc/zabbix/scripts/monitor-rabbitmq/.rab.auth
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy file scripts rabbitmq-check-cluster.py
+  copy:
+    src: rabbitmq-check-cluster.py
+    dest: /etc/zabbix/scripts/monitor-rabbitmq/rabbitmq-check-cluster.py
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy file scripts rabbitmq-status.sh
+  copy:
+    src: rabbitmq-status.sh
+    dest: /etc/zabbix/scripts/monitor-rabbitmq/rabbitmq-status.sh
+    owner: root
+    group: root
+    mode: 0755
+

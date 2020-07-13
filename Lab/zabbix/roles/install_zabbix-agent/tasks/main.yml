@@ -1,0 +1,12 @@
+---
+- name: include_tasks add_repos_zabbix.yml
+  include_tasks: add_repos_zabbix.yml
+
+- name: include_tasks install_zabbix-agent.yml
+  include_tasks: install_zabbix-agent.yml
+
+- name: include_tasks config_zabbix-agent.yml
+  include_tasks: config_zabbix-agent.yml
+
+- name: include_tasks restart_service.yml
+  include_tasks: restart_service.yml

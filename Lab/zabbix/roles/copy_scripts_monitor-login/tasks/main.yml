@@ -1,0 +1,21 @@
+---
+- name: Copy file config monitor-login.conf
+  copy:
+    src: /root/ansible/zabbix/roles/copy_scripts_monitor-login/files/monitor-login.conf
+    dest: /etc/zabbix/zabbix_agentd.d/monitor-login.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy file script monitor-login.py
+  copy:
+    src: /root/ansible/zabbix/roles/copy_scripts_monitor-login/files/monitor-login.py
+    dest: /etc/zabbix/scripts/monitor-login/monitor-login.py
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Change mod for file `/var/log/secure
+  file:
+    path: /var/log/secure
+    mode: 0644

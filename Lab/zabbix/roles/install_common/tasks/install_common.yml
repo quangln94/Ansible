@@ -1,0 +1,8 @@
+---
+- name: Install some common packages
+  yum:
+    name: "{{ common_packages }}"
+  vars:
+    common_packages:
+      - epel-release
+  become: true

@@ -1,0 +1,93 @@
+---
+#- name: Set root Password
+#  mysql_user:
+#    name: root
+#    password: 123456
+#    priv: '*.*:ALL'
+#    state: present
+#    host: localhost
+#- name: update mysql root password for all root accounts
+#  mysql_user:
+#    login_user: root
+#    login_password: 123456
+#    name: root
+#    host: "{{ item }}"
+#    password: 123456
+#    priv: '*.*:ALL'
+#  :q!:q!:
+#    - "{{ ansible_hostname }}"
+#    - 127.0.0.1
+#    - ::1
+#    - 192.168.40.141
+#    - localhost
+#  become: true
+#  tags: mysql
+- name: Set root Password
+  mysql_user: login_password=123456 check_implicit_admin=yes name=root host={{ item }} password=123456 state=present
+  with_items:
+    - localhost
+# ignore_errors: yes
+  become: true
+  run_once: true
+
+- name: Reload privilege tables
+  command: 'mysql -u root -p123456 -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+
+- name: Remove anonymous users
+  command: 'mysql -u root -p123456 -ne "{{ item }}"'
+  with_items:
+    - DELETE FROM mysql.user WHERE User=''
+
+#- name: Remove disallow user
+##  command: 'mysql -ne "{{ item }}"'
+##  with_items:
+##    - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
+#
+- name: Remove test database and access to it
+  command: 'mysql -u root -p123456 -ne "{{ item }}"'
+  with_items:
+    - DROP DATABASE IF EXISTS test
+    - DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%'
+
+- name: Reload privilege tables
+  command: 'mysql -u root -p123456 -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+
+- name: Config user databases
+  mysql_user:
+    login_user: root
+    login_password: 123456
+#    login_host: 192.168.40.141
+    name: root
+    host: "{{ item }}"
+    priv: "*.*:ALL"
+    password: 123456
+    state: present
+  with_items:
+    - 192.168.40.141
+  run_once: yes
+
+- name: Create a new database with name 'zabbix'
+  mysql_db:
+    login_user: root
+    login_password: 123456
+    name: zabbix
+    state: present
+
+- name: Create database user with name 'zabbix' and password 'zabbix' with all database privileges
+  mysql_user:
+    login_user: root
+    login_password: 123456
+    name: zabbix
+    password: zabbix
+    priv: '*.*:ALL,GRANT'
+    host: localhost
+    state: present
+    update_password: on_create
+#    ignore_errors: yes
+
+#- name: Import database
+#  shell: zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -p zabbix

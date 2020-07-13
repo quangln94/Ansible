@@ -1,0 +1,9 @@
+---
+- name: include_tasks add_repos_mariadb.yml
+  include_tasks: add_repos_mariadb.yml
+  
+- name: include_tasks install_mariadb.yml
+  include_tasks: install_mariadb.yml
+
+- name: include_tasks config_mariadb.yml
+  include_tasks: config_mariadb.yml

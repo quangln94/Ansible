@@ -1,0 +1,5 @@
+---
+- name: Install zabbix-agent
+  yum:
+    name:
+      - zabbix-agent

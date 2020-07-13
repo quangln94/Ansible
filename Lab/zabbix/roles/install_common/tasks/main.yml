@@ -1,0 +1,3 @@
+---
+- name: include_tasks install_common.yml
+  include_tasks: install_common.yml

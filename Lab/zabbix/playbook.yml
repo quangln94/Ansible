@@ -1,0 +1,84 @@
+---
+- name: Garther_facts
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Group hosts to determine when using --limit
+      setup:
+    - debug: var=hostvars[inventory_hostname]['ansible_default_ipv4']['address']
+    - debug: var=hostvars[inventory_hostname]['ansible_eth3']['ipv4']['address']
+
+- name: Install zabbix-agent
+  hosts: zabbix-agent
+  gather_facts: false
+  tasks:
+  roles:
+    - { role: install_zabbix-agent,
+        tags: install_zabbix-agent }
+
+- name: Create directory for zabbix
+  hosts: zabbix-agent
+  gather_facts: false
+  tasks:
+    - name: Create directory for zabbix
+      file:
+        path: "{{ item }}"
+        state: directory
+        recurse: yes
+        owner: zabbix
+        group: zabbix
+        mode: 0755
+      with_items:
+         - /etc/zabbix/scripts/monitor-login
+         - /etc/zabbix/scripts/monitor-ceph
+         - /etc/zabbix/scripts/monitor-openstack-resource
+         - /etc/zabbix/scripts/monitor-rabbitmq
+         - /var/tools/zabbix/monitor
+
+- name: Copy script monitor login to all Node
+  hosts: zabbix-agent
+  gather_facts: false
+  tasks:
+  roles:
+    - { role: copy_scripts_monitor-login,
+        tags: copy_scripts_monitor-login }
+
+- name: Copy script monitor RabbitMQ to Node Controller
+  hosts: controller1
+  gather_facts: false
+  tasks:
+  roles:
+    - { role: copy_scripts_monitor-rabbitmq,
+        tags: copy_scripts_monitor-rabbitmq }
+
+- name: Copy script moitor Galera to Node Controler
+  hosts: controller
+  gather_facts: false
+  tasks:
+  roles:
+    - { role: copy_scripts_monitor-galera,
+        tags: copy_scripts_monitor-galera }
+
+- name: Copy script monitor Openstack to Node Controler
+  hosts: controller
+  gather_facts: false
+  tasks:
+  roles:
+    - { role: copy_scripts_monitor-openstack-resource,
+        tags: copy_scripts_monitor-openstack-resource }
+
+- name: Copy script monitor Ceph to Node Ceph
+  hosts: storage
+  gather_facts: false
+  tasks:
+  roles:
+    - { role: copy_scripts_monitor-ceph,
+        tags: copy_scripts_monitor-ceph }
+
+- name: Restart zabbix-agent
+  hosts: zabbix-agent
+  gather_facts: false
+  tasks:
+    - service:
+        name: zabbix-agent
+        state: restarted

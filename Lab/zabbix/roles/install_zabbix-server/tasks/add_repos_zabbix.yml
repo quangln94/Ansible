@@ -1,0 +1,29 @@
+- name: Add zabbix repository
+  yum_repository:
+    name: zabbix
+    baseurl: http://repo.zabbix.com/zabbix/4.4/rhel/7/$basearch/
+    gpgkey: https://repo.zabbix.com/RPM-GPG-KEY-ZABBIX-A14FE591
+    enabled: 1
+    gpgcheck: 1
+    file: zabbix
+    description: Zabbix Official Repository - $basearch
+
+- name: Add zabbix-debuginfo repository
+  yum_repository:
+    name: zabbix-debuginfo
+    baseurl: http://repo.zabbix.com/zabbix/4.4/rhel/7/$basearch/debuginfo/
+    gpgkey: https://repo.zabbix.com/RPM-GPG-KEY-ZABBIX-A14FE591
+    enabled: 0
+    gpgcheck: 1
+    file: zabbix
+    description: Zabbix Official Repository debuginfo - $basearch
+
+- name: Add zabbix-non-supported repository
+  yum_repository:
+    name: zabbix-non-supported
+    baseurl: http://repo.zabbix.com/non-supported/rhel/7/$basearch/
+    gpgkey: https://repo.zabbix.com/RPM-GPG-KEY-ZABBIX
+    enabled: 1
+    gpgcheck: 1
+    file: zabbix
+    description: Zabbix Official Repository non-supported - $basearch

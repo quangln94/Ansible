@@ -1,0 +1,22 @@
+#Zabbix server
+ZABBIX_SERVER_IP: 192.168.40.26
+
+#Galera
+ZABBIX_DB_USER: zabbix
+ZABBIX_DB_PASSWORD: zabbix
+
+#Openstack resource for user and project admin
+USER: admin
+ADMIN_USERID: cfd67766f9134f0aac54ba31ff50dc78
+ADMIN_PASSWORD: 86c1e9156686a03ccf92
+ADMIN_PROJECTID: 51dae6698d65454eabc80e9ca661c13f
+ADMIN_PROJECT: admin
+KEYSTONE_ENDPOINT: http://192.168.20.11:5000/v3/auth
+
+#Openstack resource UserParamater
+PROTOCOL: http
+ENDPOINT: 192.168.20.11
+
+#RabbitMQ
+RABBITMQ_USER: guest
+RABBIRMQ_PASSWORD: guest

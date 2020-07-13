@@ -1,0 +1,16 @@
+---
+- name: Copy file config monitor-galera.conf
+  copy:
+    src: monitor-galera.conf
+    dest: /etc/zabbix/zabbix_agentd.d/monitor-galera.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy file config login for user zabbix
+  template:
+    src: .my.cnf
+    dest: /var/lib/zabbix/.my.cnf
+    owner: root
+    group: root
+    mode: 0644

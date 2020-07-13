@@ -1,0 +1,6 @@
+USERNAME={{ RABBITMQ_USER }}
+PASSWORD={{ RABBIRMQ_PASSWORD }}
+CONF=/etc/zabbix/zabbix_agentd.conf
+LOGLEVEL=DEBUG
+LOGFILE=/var/log/zabbix/rabbitmq_zabbix.log
+PORT=15672

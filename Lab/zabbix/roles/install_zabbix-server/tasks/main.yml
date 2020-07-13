@@ -1,0 +1,6 @@
+---
+- name: include_tasks add_repos_zabbix.yml
+  include_tasks: add_repos_zabbix.yml
+
+- name: include_tasks install_zabbi-server.yml
+  include_tasks: install_zabbix-server.yml

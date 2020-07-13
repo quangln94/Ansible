@@ -1,0 +1,11 @@
+---
+- name: Install MariaDB
+  yum:
+    name:
+      - MariaDB-server
+      - MariaDB-client
+      - MySQL-python
+    state: installed
+
+- name: Ensure MariaDB is running.
+  service: name=mariadb state=started enabled=yes

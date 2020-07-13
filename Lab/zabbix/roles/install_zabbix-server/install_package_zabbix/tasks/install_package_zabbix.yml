@@ -1,0 +1,13 @@
+- name: Install package 
+  command: rpm -Uvh https://repo.zabbix.com/zabbix/4.4/rhel/7/x86_64/zabbix-release-4.4-1.el7.noarch.rpm
+
+- name: Install Zabbix-serrver, zabbix-agent, zabbix-frontend
+  yum:
+    name:
+      - zabbix-server-mysql
+      - zabbix-agent
+      - zabbix-web-mysql
+  state: installed
+
+- name: Ensure MariaDB is running.
+  service: name=zabbix-server state=started enabled=yes

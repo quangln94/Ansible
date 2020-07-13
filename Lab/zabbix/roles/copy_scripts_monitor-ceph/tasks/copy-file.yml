@@ -1,0 +1,21 @@
+---
+- name: Copy file config monitor-ceph.conf
+  copy:
+    src: monitor-ceph.conf
+    dest: /etc/zabbix/zabbix_agentd.d/monitor-ceph.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy file script ceph-status.sh
+  copy:
+    src: ceph-status.sh
+    dest: /etc/zabbix/scripts/monitor-ceph/ceph-status.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Install bc for script_monitor_ceph
+  yum:
+    name: bc
+    state: latest

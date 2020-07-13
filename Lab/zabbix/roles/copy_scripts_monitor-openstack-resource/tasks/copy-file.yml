@@ -1,0 +1,40 @@
+---
+- name: Copy file config openstack-resource.conf
+  template:
+    src: openstack-resource.conf
+    dest: /etc/zabbix/zabbix_agentd.d/openstack-resource.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy file scripts check_api_HN.conf
+  template:
+    src: check_api_HN.conf
+    dest: /etc/zabbix/scripts/monitor-openstack-resource/check_api_HN.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy file scripts check_api_HN.py
+  copy:
+    src: /root/ansible/zabbix/roles/copy_scripts_monitor-openstack-resource/files/check_api_HN.py
+    dest: /etc/zabbix/scripts/monitor-openstack-resource/check_api_HN.py
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy file script check_resources_HN.py
+  copy:
+    src: /root/ansible/zabbix/roles/copy_scripts_monitor-openstack-resource/files/check_resources_HN.py
+    dest: /etc/zabbix/scripts/monitor-openstack-resource/check_resources_HN.py
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy file script zabbix_checks_logger.py
+  copy:
+    src: /root/ansible/zabbix/roles/copy_scripts_monitor-openstack-resource/files/zabbix_checks_logger.py
+    dest: /etc/zabbix/scripts/monitor-openstack-resource/zabbix_checks_logger.py
+    owner: root
+    group: root
+    mode: 0755
