@@ -8,7 +8,8 @@
   until: ceph_mgr_services.stdout != "{}"
   retries: 10
   delay: 2
-
+  run_once: true
+  
 - name: print dashboard URL
   debug:
     msg: "The dashboard has been deployed! You can access your dashboard web UI at {{ (ceph_mgr_services.stdout|from_json).dashboard }} as an '{{ dashboard_admin_user }}' user with '{{ dashboard_admin_password }}' password."
