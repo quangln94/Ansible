@@ -1,0 +1,140 @@
+---
+- name: set_fact container_exec_cmd
+  set_fact:
+    container_exec_cmd: "{{ container_binary }} exec ceph-mon-{{ hostvars[groups[mon_group_name][0]]['ansible_hostname'] }}"
+  when: containerized_deployment | bool
+
+- name: disable SSL for dashboard
+  command: "{{ container_exec_cmd }} ceph --cluster {{ cluster }} config set mgr mgr/dashboard/ssl false"
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+  run_once: true
+  when: dashboard_protocol == "http"
+
+- name: with SSL for dashboard
+  when: dashboard_protocol == "https"
+  block:
+    - name: enable SSL for dashboard
+      command: "{{ container_exec_cmd }} ceph --cluster {{ cluster }} config set mgr mgr/dashboard/ssl true"
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      run_once: true
+
+    - name: copy dashboard SSL certificate file
+      copy:
+        src: "{{ dashboard_crt }}"
+        dest: "/etc/ceph/ceph-dashboard.crt"
+        owner: root
+        group: root
+        mode: 0440
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      when: dashboard_crt | length > 0
+
+    - name: copy dashboard SSL certificate key
+      copy:
+        src: "{{ dashboard_key }}"
+        dest: "/etc/ceph/ceph-dashboard.key"
+        owner: root
+        group: root
+        mode: 0440
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      when: dashboard_key | length > 0
+
+    - name: generate and copy self-signed certificate
+      when: dashboard_key | length == 0 or dashboard_crt | length == 0
+      block:
+        - name: generate a Self Signed OpenSSL certificate for dashboard
+          shell: |
+            test -f /etc/ceph/ceph-dashboard.key -a -f /etc/ceph/ceph-dashboard.crt || \
+            openssl req -new -nodes -x509 -subj '/O=IT/CN=ceph-dashboard' -days 3650 -keyout /etc/ceph/ceph-dashboard.key -out /etc/ceph/ceph-dashboard.crt -extensions v3_ca
+          run_once: True
+
+        - name: slurp self-signed generated certificate for dashboard
+          slurp:
+            src: "/etc/ceph/{{ item }}"
+          run_once: True
+          with_items:
+            - 'ceph-dashboard.key'
+            - 'ceph-dashboard.crt'
+          register: slurp_self_signed_crt
+
+        - name: copy self-signed generated certificate on mons
+          copy:
+            dest: "{{ item.0.source }}"
+            content: "{{ item.0.content | b64decode }}"
+            owner: "{{ ceph_uid }}"
+            group: "{{ ceph_uid }}"
+            mode: "{{ '0600' if item.0.source.split('.')[-1] == 'key' else '0664' }}"
+          delegate_to: "{{ item.1 }}"
+          run_once: True
+          with_nested:
+            - "{{ slurp_self_signed_crt.results }}"
+            - "{{ groups[mon_group_name] }}"
+
+    - name: import dashboard certificate file
+      command: "{{ container_exec_cmd }} ceph --cluster {{ cluster }} config-key set mgr/dashboard/crt -i /etc/ceph/ceph-dashboard.crt"
+      changed_when: false
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      run_once: true
+
+    - name: import dashboard certificate key
+      command: "{{ container_exec_cmd }} ceph --cluster {{ cluster }} config-key set mgr/dashboard/key -i /etc/ceph/ceph-dashboard.key"
+      changed_when: false
+      delegate_to: "{{ groups[mon_group_name][0] }}"
+      run_once: true
+
+- name: "set the dashboard port ({{ dashboard_port }})"
+  command: "{{ container_exec_cmd }} ceph --cluster {{ cluster }} config set mgr mgr/dashboard/server_port {{ dashboard_port }}"
+  changed_when: false
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+  run_once: true
+
+- name: "set the dashboard SSL port ({{ dashboard_port }})"
+  command: "{{ container_exec_cmd }} ceph --cluster {{ cluster }} config set mgr mgr/dashboard/ssl_server_port {{ dashboard_port }}"
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+  run_once: true
+  changed_when: false
+  failed_when: false # Do not fail if the option does not exist, it only exists post-14.2.0
+
+- include_tasks: configure_dashboard_backends.yml
+  with_items: '{{ groups[mgr_group_name] | default(groups[mon_group_name]) }}'
+  vars:
+    dashboard_backend: '{{ item }}'
+
+- name: disable mgr dashboard module (restart)
+  command: "{{ container_exec_cmd }} ceph --cluster {{ cluster }} mgr module disable dashboard"
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+  run_once: true
+  changed_when: false
+
+- name: enable mgr dashboard module (restart)
+  command: "{{ container_exec_cmd }} ceph --cluster {{ cluster }} mgr module enable dashboard"
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+  run_once: true
+  changed_when: false
+
+- name: set or update dashboard admin username and password
+  shell: |
+    if {{ container_exec_cmd }} ceph --cluster {{ cluster }} dashboard ac-user-show {{ dashboard_admin_user | quote }}; then
+      {{ container_exec_cmd }} ceph --cluster {{ cluster }} dashboard ac-user-set-password {{ dashboard_admin_user | quote }} {{ dashboard_admin_password | quote }}
+    else
+      {{ container_exec_cmd }} ceph --cluster {{ cluster }} dashboard ac-user-create {{ dashboard_admin_user | quote }} {{ dashboard_admin_password | quote }}
+    fi
+    {{ container_exec_cmd }} ceph --cluster {{ cluster }} dashboard ac-user-set-roles {{ dashboard_admin_user | quote }} {{ 'read-only' if dashboard_admin_user_ro | bool else 'administrator' }}
+  retries: 6
+  delay: 5
+  register: ac_result
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+  run_once: true
+  changed_when: false
+  until: ac_result.rc == 0
+
+- name: disable mgr dashboard module (restart)
+  command: "{{ container_exec_cmd }} ceph --cluster {{ cluster }} mgr module disable dashboard"
+  changed_when: false
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+  run_once: true
+
+- name: enable mgr dashboard module (restart)
+  command: "{{ container_exec_cmd }} ceph --cluster {{ cluster }} mgr module enable dashboard"
+  changed_when: false
+  delegate_to: "{{ groups[mon_group_name][0] }}"
+  run_once: true

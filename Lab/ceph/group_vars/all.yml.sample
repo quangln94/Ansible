@@ -6,43 +6,6 @@
 # Dummy variable to avoid error because ansible does not recognize the
 # file as a good configuration file when no variable in it.
 dummy:
-ceph_origin: repository
-ceph_repository: community
-ntp_service_enabled: true
-ceph_repository_type: cdn
-ceph_stable_release: nautilus
-monitor_address_block: 192.168.40.0/24
-public_network: 192.168.40.0/24
-cluster_network: 10.10.10.0/24
-devices:
-  - '/dev/vdb'
-  - '/dev/vdc'
-dedicated_devices:
-  - '/dev/vdd'
-dashboard_enabled: yes
-configure_firewall: no
-openstack_config: no
-ceph_conf_overrides:
- global:
-   mon_osd_allow_primary_affinity: 1
-   mon_clock_drift_allowed: 0.5
-   osd_pool_default_size: 2
-   osd_pool_default_min_size: 1
-   mon_pg_warn_min_per_osd: 0
-   mon_pg_warn_max_per_osd: 0
-   mon_pg_warn_max_object_skew: 0
-   osd_pool_default_pg_num: 64
-openstack_pools:
-  - "{{ openstack_glance_pool }}"
-  - "{{ openstack_cinder_pool }}"
-  - "{{ openstack_nova_pool }}"
-  - "{{ openstack_cinder_backup_pool }}"
-  - "{{ openstack_gnocchi_pool }}"
-  - "{{ openstack_cephfs_data_pool }}"
-  - "{{ openstack_cephfs_metadata_pool }}"
-dashboard_protocol: https
-dashboard_admin_user: admin
-dashboard_admin_password: admin
 
 # You can override vars by using host or group vars
 
