@@ -1,0 +1,14 @@
+[mons]
+ceph01 ansible_host=192.168.40.141
+ceph02 ansible_host=192.168.40.142
+ceph03 ansible_host=192.168.40.143
+
+[osds]
+ceph01 ansible_host=192.168.40.141
+ceph02 ansible_host=192.168.40.142
+ceph03 ansible_host=192.168.40.143
+
+[mgrs]
+ceph01 ansible_host=192.168.40.141
+ceph02 ansible_host=192.168.40.142
+ceph03 ansible_host=192.168.40.143
