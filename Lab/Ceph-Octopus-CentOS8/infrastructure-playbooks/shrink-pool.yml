@@ -1,0 +1,9 @@
+- hosts: "{{ groups['mons'][0] }}"
+  become: true
+  tasks:
+    - name: shrink ceph pool
+      ceph_pool:
+        name: "{{ item.name }}"
+        state: absent
+        cluster: ceph
+      with_items: "{{ create_pools }}"

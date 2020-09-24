@@ -1,0 +1,4 @@
+# Khai bao Public Network
+CephVolume: 192.168.40.0/24
+# Khai bao Cluster Network
+CephReplicate: 10.10.10.0/24

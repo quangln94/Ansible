@@ -1,0 +1,4 @@
+---
+- name: include check_socket_non_container.yml
+  include_tasks: check_socket_non_container.yml
+  when: not containerized_deployment | bool

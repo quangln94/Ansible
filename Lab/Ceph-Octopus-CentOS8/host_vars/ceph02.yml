@@ -1,0 +1,15 @@
+#osd_objectstore: bluestore #If not defined
+osd_objectstore: filestore
+
+devices:
+  - '/dev/vdb'
+  - '/dev/vdc'
+  - '/dev/vdd'
+
+#If not dedicated_devices
+dedicated_devices: []
+
+#If dedicated_devices is defined
+#dedicated_devices_custome:
+#  - '/dev/vdd'
+#

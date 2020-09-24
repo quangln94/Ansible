@@ -1,0 +1,209 @@
+#jinja2: trim_blocks: "true", lstrip_blocks: "true"
+# {{ ansible_managed }}
+
+[global]
+
+debug lockdep = 0/0
+debug context = 0/0
+debug crush = 0/0
+debug mds = 0/0
+debug mds balancer = 0/0
+debug mds locker = 0/0
+debug mds log = 0/0
+debug mds log expire = 0/0
+debug mds migrator = 0/0
+debug buffer = 0/0
+debug timer = 0/0
+debug filer = 0/0
+debug objecter = 0/0
+debug rados = 0/0
+debug rbd = 0/0
+debug journaler = 0/0
+debug objectcacher = 0/0
+debug client = 0/0
+debug osd = 0/0
+debug optracker = 0/0
+debug objclass = 0/0
+debug filestore = 0/0
+debug journal = 0/0
+debug ms = 0/0
+debug mon = 0/0
+debug monc = 0/0
+debug paxos = 0/0
+debug tp = 0/0
+debug auth = 0/0
+debug finisher = 0/0
+debug heartbeatmap = 0/0
+debug perfcounter = 0/0
+debug rgw = 0/0
+debug hadoop = 0/0
+debug asok = 0/0
+debug throttle = 0/0
+
+#Older CephFS kernel clients may have trouble when signatures are required
+cephx require signatures = true
+
+{% if not cephx %}
+auth cluster required = none
+auth service required = none
+auth client required = none
+{% else %}
+auth cluster required = cephx
+auth service required = cephx
+auth client required = cephx
+{% endif %}
+
+{% if ip_version == 'ipv6'  %}
+ms bind ipv6 = true
+ms bind ipv4 = false
+{% endif %}
+
+{% if common_single_host_mode is defined and common_single_host_mode %}
+osd crush chooseleaf type = 0
+{% endif %}
+{# NOTE (leseb): the blank lines in-between are needed otherwise we won't get any line break #}
+
+{% set nb_mon = groups.get(mon_group_name, []) | length | int %}
+{% set nb_client = groups.get(client_group_name, []) | length | int %}
+{% set nb_osd = groups.get(osd_group_name, []) | length | int %}
+{% if inventory_hostname in groups.get(client_group_name, []) and not inventory_hostname == groups.get(client_group_name, []) | first %}
+{% set ceph_release = hostvars[groups[client_group_name][0]]['ceph_release'] %}
+{% endif %}
+
+{% if nb_mon > 0 and inventory_hostname in groups.get(mon_group_name, []) %}
+mon initial members = {% for host in groups[mon_group_name] %}
+      {% if hostvars[host]['ansible_hostname'] is defined -%}
+        {{ hostvars[host]['ansible_hostname'] }}
+      {%- endif %}
+      {%- if not loop.last %},{% endif %}
+    {% endfor %}
+
+osd pool default crush rule = {{ osd_pool_default_crush_rule }}
+{% endif %}
+
+#osd crush update on start = false
+fsid = {{ fsid }}
+mon host = {% if nb_mon > 0 %}
+{% for host in _monitor_addresses -%}
+{% if msgr2_migration | default(False) %}
+[{{ "v2:" + host.addr + mon_host_v2.suffix }},{{ "v1:" + host.addr + mon_host_v1.suffix }}]
+{%- elif not msgr2_migration | default(False) and rolling_update -%}
+{{ host.addr }}
+{%- else -%}
+{% if mon_host_v1.enabled %}
+{% set _v1 = ',v1:' + host.addr + mon_host_v1.suffix %}
+{% endif %}
+[{{ "v2:" + host.addr + mon_host_v2.suffix }}{{ _v1 | default('') }}]
+{%- endif %}
+{%- if not loop.last -%},{%- endif %}
+{%- endfor %}
+{% elif nb_mon == 0 %}
+{{ external_cluster_mon_ips }}
+{% endif %}
+
+{% if public_network is defined %}
+public network = {{ public_network | regex_replace(' ', '') }}
+{% endif %}
+{% if cluster_network is defined %}
+cluster network = {{ cluster_network | regex_replace(' ', '') }}
+{% endif %}
+{% if rgw_override_bucket_index_max_shards is defined %}
+rgw override bucket index max shards = {{ rgw_override_bucket_index_max_shards }}
+{% endif %}
+{% if rgw_bucket_default_quota_max_objects is defined %}
+rgw bucket default quota max objects = {{ rgw_bucket_default_quota_max_objects }}
+{% endif %}
+
+{% if inventory_hostname in groups.get(client_group_name, []) %}
+[client.libvirt]
+admin socket = {{ rbd_client_admin_socket_path }}/$cluster-$type.$id.$pid.$cctid.asok # must be writable by QEMU and allowed by SELinux or AppArmor
+log file = {{ rbd_client_log_file }} # must be writable by QEMU and allowed by SELinux or AppArmor
+{% endif %}
+
+{% if inventory_hostname in groups.get(osd_group_name, []) or multi_osd_backend | bool %}
+{% if osd_objectstore == 'filestore' or multi_osd_backend | bool %}
+[mon]
+mon osd full ratio = {{ mon_osd_full_ratio }}
+mon osd nearfull ratio = {{ mon_osd_nearfull_ratio }}
+
+[osd]
+osd mkfs type = {{ osd_mkfs_type }}
+osd mkfs options xfs = {{ osd_mkfs_options_xfs }}
+osd mount options xfs = {{ osd_mount_options_xfs }}
+osd journal size = {{ journal_size }}
+osd op threads = 4
+osd disk threads = 1
+osd max backfills = 1
+osd recovery max active = 1
+{% if filestore_xattr_use_omap != None %}
+filestore xattr use omap = {{ filestore_xattr_use_omap }}
+{% elif osd_mkfs_type == "ext4" %}
+filestore xattr use omap = true
+{# else, default is false #}
+{% endif %}
+{% endif %}
+
+{% if osd_objectstore == 'bluestore' or multi_osd_backend | bool %}
+{% set _num_osds = num_osds | default(0) | int %}
+[osd]
+bluestore min alloc size ssd = 4096
+bluestore min alloc size hdd = 4096
+{% if is_hci and _num_osds > 0 %}
+{# hci_safety_factor is the safety factor for HCI deployments #}
+{% if ansible_memtotal_mb * 1048576 * hci_safety_factor / _num_osds > osd_memory_target %}
+{% set _osd_memory_target = (ansible_memtotal_mb * 1048576 * hci_safety_factor / _num_osds) | int %}
+{% endif %}
+
+{% elif _num_osds > 0 %}
+{# non_hci_safety_factor is the safety factor for dedicated nodes #}
+{% if ansible_memtotal_mb * 1048576 * non_hci_safety_factor / _num_osds > osd_memory_target %}
+{% set _osd_memory_target = (ansible_memtotal_mb * 1048576 * non_hci_safety_factor / _num_osds) | int %}
+{% endif %}
+{% endif %}
+osd memory target = {{ _osd_memory_target | default(osd_memory_target) }}
+{% endif %}
+{% endif %}
+0
+{% if inventory_hostname in groups.get(rgw_group_name, []) %}
+{% for host in groups[rgw_group_name] %}
+{% set _rgw_hostname = hostvars[host]['rgw_hostname'] | default(hostvars[host]['ansible_hostname']) %}
+{# {{ hostvars[host]['rgw_hostname'] }} for backward compatibility, fqdn issues. See bz1580408 #}
+{% if hostvars[host]['rgw_instances'] is defined %}
+{% for instance in hostvars[host]['rgw_instances'] %}
+[client.rgw.{{ _rgw_hostname + '.' + instance['instance_name'] }}]
+host = {{ _rgw_hostname }}
+keyring = /var/lib/ceph/radosgw/{{ cluster }}-rgw.{{ _rgw_hostname + '.' + instance['instance_name'] }}/keyring
+log file = /var/log/ceph/{{ cluster }}-rgw-{{ hostvars[host]['ansible_hostname'] + '.' + instance['instance_name'] }}.log
+{% set _rgw_binding_socket = instance['radosgw_address'] | default(_radosgw_address) | string + ':' + instance['radosgw_frontend_port'] | default(radosgw_frontend_port) | string %}
+{%- macro frontend_line(frontend_type) -%}
+{%- if frontend_type == 'civetweb' -%}
+{{ radosgw_frontend_type }} port={{ _rgw_binding_socket }}{{ 's ssl_certificate='+radosgw_frontend_ssl_certificate if radosgw_frontend_ssl_certificate else '' }}
+{%- elif frontend_type == 'beast' -%}
+{{ radosgw_frontend_type }} {{ 'ssl_' if radosgw_frontend_ssl_certificate else '' }}endpoint={{ _rgw_binding_socket }}{{ ' ssl_certificate='+radosgw_frontend_ssl_certificate if radosgw_frontend_ssl_certificate else '' }}
+{%- endif -%}
+{%- endmacro -%}
+rgw frontends = {{ frontend_line(radosgw_frontend_type) }} {{ radosgw_frontend_options }}
+{% if 'num_threads' not in radosgw_frontend_options %}
+rgw thread pool size = {{ radosgw_thread_pool_size }}
+{% endif %}
+{% if rgw_multisite | bool %}
+rgw_realm = {{ instance['rgw_realm'] }}
+rgw_zonegroup = {{ instance['rgw_zonegroup'] }}
+rgw_zone = {{ instance['rgw_zone'] }}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if inventory_hostname in groups.get(nfs_group_name, []) and inventory_hostname not in groups.get(rgw_group_name, []) %}
+{% for host in groups[nfs_group_name] %}
+{% set _rgw_hostname = hostvars[host]['rgw_hostname'] | default(hostvars[host]['ansible_hostname']) %}
+{% if nfs_obj_gw %}
+[client.rgw.{{ _rgw_hostname }}]
+host = {{ _rgw_hostname }}
+keyring = /var/lib/ceph/radosgw/{{ cluster }}-rgw.{{ _rgw_hostname }}/keyring
+log file = /var/log/ceph/{{ cluster }}-rgw-{{ hostvars[host]['ansible_hostname'] }}.log
+{% endif %}
+{% endfor %}
+{% endif %}

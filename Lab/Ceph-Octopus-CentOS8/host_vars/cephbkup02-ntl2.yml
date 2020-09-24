@@ -1,0 +1,17 @@
+#osd_objectstore: Chon bluestore hoac filestore
+osd_objectstore: filestore
+
+devices:
+  - '/dev/sdb'
+  - '/dev/sdc'
+  - '/dev/sdd'
+  - '/dev/sde'
+
+# Neu khong su dung osd_objectstore thi khai bao nhu sau:
+#dedicated_devices: []
+
+# Neu su dung osd_objectstore thi khai bao nhu sau:
+#dedicated_devices:
+#  - '/dev/vdb'
+
+dedicated_devices: []

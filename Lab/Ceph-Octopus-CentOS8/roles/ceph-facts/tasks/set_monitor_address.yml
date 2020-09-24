@@ -1,0 +1,16 @@
+---
+- name: set_fact _monitor_addresses to monitor_address_block ipv4
+  set_fact:
+    _monitor_addresses: "{{ _monitor_addresses | default([]) + [{ 'name': item, 'addr': hostvars[item]['ansible_all_ipv4_addresses'] | ips_in_ranges(hostvars[item]['monitor_address_block'].split(',')) | first }] }}"
+  with_items: "{{ groups.get(mon_group_name, []) }}"
+  when:
+    - "item not in _monitor_addresses | default([]) | selectattr('name', 'defined') |  map(attribute='name') | list"
+    - hostvars[item]['monitor_address_block'] is defined
+    - hostvars[item]['monitor_address_block'] != 'subnet'
+    - ip_version == 'ipv4'
+
+- name: set_fact _current_monitor_address
+  set_fact:
+    _current_monitor_address: "{{ item.addr }}"
+  with_items: "{{ _monitor_addresses }}"
+  when: inventory_hostname == item.name

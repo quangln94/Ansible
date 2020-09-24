@@ -1,0 +1,31 @@
+[mons]
+#ceph01 ansible_host=192.168.40.141
+ceph02 ansible_host=192.168.40.142
+ceph03 ansible_host=192.168.40.143
+#ceph04 ansible_host=192.168.20.30
+#ceph05 ansible_host=192.168.20.34
+ceph06 ansible_host=192.168.40.146
+
+[osds]
+#ceph01 ansible_host=192.168.40.141
+ceph02 ansible_host=192.168.40.142
+ceph03 ansible_host=192.168.40.143
+#ceph04 ansible_host=192.168.20.30
+#ceph05 ansible_host=192.168.20.34
+ceph06 ansible_host=192.168.40.146
+
+[mgrs]
+#ceph01 ansible_host=192.168.40.141
+ceph02 ansible_host=192.168.40.142
+ceph03 ansible_host=192.168.40.143
+#ceph04 ansible_host=192.168.20.30
+#ceph05 ansible_host=192.168.20.34
+ceph06 ansible_host=192.168.40.146
+
+[mdss]
+#ceph01 ansible_host=192.168.40.141
+ceph02 ansible_host=192.168.40.142
+ceph03 ansible_host=192.168.40.143
+#ceph04 ansible_host=192.168.20.30
+#ceph05 ansible_host=192.168.20.34
+ceph06 ansible_host=192.168.40.146

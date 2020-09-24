@@ -1,0 +1,17 @@
+---
+- name: Set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Update packages for Servers
+  yum:
+     name: '*'
+     state: latest
+
+- name: Ensure SELinux is set to disabled mode
+  lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: SELINUX=disabled
+  notify:
+    - Reboot host

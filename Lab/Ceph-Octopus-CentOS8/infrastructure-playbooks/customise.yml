@@ -1,0 +1,29 @@
+create_pools:
+  - "{{ pool_test_01 }}"
+  - "{{ pool_test_02 }}"
+
+pool_test_01:
+  name: "test_01"
+  pg_num: 16
+  pgp_num: 16
+  rule_name: "ceph_hdd"
+  type: 1
+  erasure_profile: ""
+  expected_num_objects: ""
+  application: "rbd"
+  size: 1
+  min_size: 1
+  pg_autoscale_mode: False
+pool_test_02:
+  name: "test_02"
+  pg_num: 16
+  pgp_num: 16
+  rule_name: "ceph_ssd"
+  type: 1
+  erasure_profile: ""
+  expected_num_objects: ""
+  application: "rbd"
+  size: 1
+  min_size: 1
+  pg_autoscale_mode: False
+

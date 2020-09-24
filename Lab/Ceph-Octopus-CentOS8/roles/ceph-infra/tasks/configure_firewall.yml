@@ -1,0 +1,144 @@
+---
+- name: check firewalld installation on redhat or SUSE/openSUSE
+  command: rpm -q firewalld
+  args:
+    warn: no
+  register: firewalld_pkg_query
+  ignore_errors: true
+  check_mode: no
+  changed_when: false
+  tags: firewall
+
+- when: (firewalld_pkg_query.get('rc', 1) == 0
+      or is_atomic | bool)
+  tags: firewall
+  block:
+    - name: install firewalld python binding
+      package:
+        name: "python{{ ansible_python.version.major }}-firewall"
+      tags: with_pkg
+      when: not is_atomic | bool
+
+    - name: start firewalld
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+      register: result
+      retries: 5
+      delay: 3
+      until: result is succeeded
+
+    - name: open ceph networks on monitor
+      firewalld:
+        zone: "{{ ceph_mon_firewall_zone }}"
+        source: "{{ item }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      with_items: "{{ public_network.split(',') }}"
+      when:
+        - mon_group_name is defined
+        - mon_group_name in group_names
+
+    - name: open ceph networks on manager when collocated
+      firewalld:
+        zone: "{{ ceph_mgr_firewall_zone }}"
+        source: "{{ item }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      with_items: "{{ public_network.split(',') }}"
+      when:
+        - mon_group_name is defined
+        - mon_group_name in group_names
+        - mgr_group_name | length == 0
+
+    - name: open monitor and manager ports
+      firewalld:
+        service: "{{ item.service }}"
+        zone: "{{ item.zone }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      with_items:
+        - { 'service': 'ceph-mon', 'zone': "{{ ceph_mon_firewall_zone }}" }
+        - { 'service': 'ceph', 'zone': "{{ ceph_mgr_firewall_zone }}" }
+      when:
+        - mon_group_name is defined
+        - mon_group_name in group_names
+
+    - name: open ceph networks on manager when dedicated
+      firewalld:
+        zone: "{{ ceph_mgr_firewall_zone }}"
+        source: "{{ item }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      with_items: "{{ public_network.split(',') }}"
+      when:
+        - mgr_group_name is defined
+        - mgr_group_name in group_names
+        - mgr_group_name | length > 0
+
+    - name: open manager ports
+      firewalld:
+        service: ceph
+        zone: "{{ ceph_mgr_firewall_zone }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      when:
+        - mgr_group_name is defined
+        - mgr_group_name in group_names
+
+    - name: open ceph networks on osd
+      firewalld:
+        zone: "{{ ceph_osd_firewall_zone }}"
+        source: "{{ item }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      with_items: "{{ public_network.split(',') | union(cluster_network.split(',')) }}"
+      when:
+        - osd_group_name is defined
+        - osd_group_name in group_names
+
+    - name: open osd ports
+      firewalld:
+        service: ceph
+        zone: "{{ ceph_osd_firewall_zone }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      when:
+        - osd_group_name is defined
+        - osd_group_name in group_names
+
+    - name: open ceph networks on mds
+      firewalld:
+        zone: "{{ ceph_mds_firewall_zone }}"
+        source: "{{ item }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      with_items: "{{ public_network.split(',') }}"
+      when:
+        - mds_group_name is defined
+        - mds_group_name in group_names
+
+    - name: open mds ports
+      firewalld:
+        service: ceph
+        zone: "{{ ceph_mds_firewall_zone }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      with_items: "{{ public_network.split(',') }}"
+      when:
+        - mds_group_name is defined
+        - mds_group_name in group_names
+
+    - name: open dashboard ports
+      include_tasks: dashboard_firewall.yml
+      when: dashboard_enabled | bool

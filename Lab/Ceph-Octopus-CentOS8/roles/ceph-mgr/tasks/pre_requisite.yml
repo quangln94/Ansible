@@ -1,0 +1,20 @@
+---
+- name: set_fact ceph_mgr_packages for dashboard
+  set_fact:
+    ceph_mgr_packages: "{{ ceph_mgr_packages | union(['ceph-mgr-dashboard']) }}"
+  when: dashboard_enabled | bool
+
+- name: set_fact ceph_mgr_packages for non el7 distribution
+  set_fact:
+    ceph_mgr_packages: "{{ ceph_mgr_packages | union(['ceph-mgr-diskprediction-local']) }}"
+  when:
+    - ansible_os_family != 'RedHat'
+    - ansible_distribution_major_version | int != 7
+
+- name: install ceph-mgr packages on RedHat or SUSE
+  package:
+    name: '{{ ceph_mgr_packages }}'
+    state: "{{ (upgrade_ceph_packages|bool) | ternary('latest','present') }}"
+  register: result
+  until: result is succeeded
+  when: ansible_os_family in ['RedHat', 'Suse']
